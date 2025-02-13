@@ -9,25 +9,26 @@ test('if ticket reference to user is redirected to anonymous if user is deleted'
     // the anonymous user id is -1
     $anonyme = User::find(-1);
 
-    $user = User::factory()->create();
+    $user1 = User::factory()->create();
+    $user2 = User::factory()->create();
 
-    $ticket1 = Ticket::factory()->create([
-        'assignee' => $user->id,
-        'reporter' => $user->id,
+    $ticket = Ticket::factory()->create([
+        'assignee' => $user1->id,
+        'reporter' => $user2->id,
     ]);
 
-    $ticket2 = Ticket::factory()->create([
-        'assignee' => $user->id,
-        'reporter' => $user->id,
-    ]);
+    expect($ticket->assignee)->toBe($user1->id)
+        ->and($ticket->reporter)->toBe($user2->id);
 
-    $user->delete();
+    $user1->delete();
+    $ticket->refresh();
 
-    $ticket1->refresh();
-    $ticket2->refresh();
+    expect($ticket->assignee)->toBe($anonyme->id)
+        ->and($ticket->reporter)->toBe($user2->id);
 
-    expect($ticket1->assignee)->toBe($anonyme->id)
-        ->and($ticket1->reporter)->toBe($anonyme->id)
-        ->and($ticket2->assignee)->toBe($anonyme->id)
-        ->and($ticket2->reporter)->toBe($anonyme->id);
+    $user2->delete();
+    $ticket->refresh();
+
+    expect($ticket->assignee)->toBe($anonyme->id)
+        ->and($ticket->reporter)->toBe($anonyme->id);
 });
